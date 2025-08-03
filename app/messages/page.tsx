@@ -9,7 +9,15 @@ export default function MessagesPage() {
   const [selectedContact, setSelectedContact] = useState(1);
   const [newMessage, setNewMessage] = useState('');
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState(null);
+  type Template = {
+    id: number;
+    title: string;
+    type: string;
+    preview: string;
+    lastUsed: string;
+    message: string;
+  };
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [templateForm, setTemplateForm] = useState({
     name: '',
     channel: 'WhatsApp',
@@ -103,7 +111,7 @@ export default function MessagesPage() {
     }
   };
 
-  const openTemplateModal = (template = null) => {
+  const openTemplateModal = (template: Template | null = null) => {
     if (template) {
       setEditingTemplate(template);
       setTemplateForm({
@@ -156,17 +164,19 @@ export default function MessagesPage() {
     closeTemplateModal();
   };
 
-  const cloneTemplate = (template) => {
+  const cloneTemplate = (template: { id?: number; title: any; type?: string; preview?: string; lastUsed?: string; message?: string; }) => {
     const clonedTemplate = {
-      ...template,
       id: templates.length + 1,
       title: `${template.title} (Copy)`,
-      lastUsed: new Date().toISOString().split('T')[0]
+      type: template.type ?? '',
+      preview: template.preview ?? '',
+      lastUsed: new Date().toISOString().split('T')[0],
+      message: template.message ?? ''
     };
     setTemplates([...templates, clonedTemplate]);
   };
 
-  const deleteTemplate = (templateId) => {
+  const deleteTemplate = (templateId: number) => {
     setTemplates(templates.filter(t => t.id !== templateId));
   };
 

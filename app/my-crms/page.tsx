@@ -1,6 +1,6 @@
 
 'use client';
-import { useState } from 'react';
+import { SetStateAction, useState } from 'react';
 import Link from 'next/link';
 import Sidebar from '../../components/Sidebar';
 import TopBar from '../../components/TopBar';
@@ -61,14 +61,40 @@ export default function MyCRMsPage() {
 
   const [showCRMBuilder, setShowCRMBuilder] = useState(false);
   const [showCRMDashboard, setShowCRMDashboard] = useState(false);
-  const [selectedCRM, setSelectedCRM] = useState(null);
+  type CRM = {
+    id: number;
+    name: string;
+    createdBy: string;
+    createdDate: string;
+    status: string;
+    fields: number;
+    leads: number;
+    lastActivity: string;
+  };
+
+  const [selectedCRM, setSelectedCRM] = useState<CRM | null>(null);
   const [builderStep, setBuilderStep] = useState(1);
-  const [newCRM, setNewCRM] = useState({
+  type CRMField = {
+    id: number;
+    name: string;
+    type: string;
+    required: boolean;
+    options: string[];
+  };
+
+  type NewCRM = {
+    name: string;
+    fields: CRMField[];
+    status: string;
+  };
+
+  const [newCRM, setNewCRM] = useState<NewCRM>({
     name: '',
     fields: [],
     status: 'Draft'
   });
-  const [newField, setNewField] = useState({
+  const [newField, setNewField] = useState<CRMField>({
+    id: 0,
     name: '',
     type: 'Text',
     required: false,
@@ -93,7 +119,7 @@ export default function MyCRMsPage() {
     setShowCRMBuilder(true);
   };
 
-  const openCRMDashboard = (crm) => {
+  const openCRMDashboard = (crm: SetStateAction<{ id: number; name: string; createdBy: string; createdDate: string; status: string; fields: number; leads: number; lastActivity: string; } | null>) => {
     setSelectedCRM(crm);
     setShowCRMDashboard(true);
   };
@@ -101,9 +127,10 @@ export default function MyCRMsPage() {
   const addField = () => {
     if (!newField.name) return;
     
+    const { id, ...fieldData } = newField;
     const field = {
       id: Date.now(),
-      ...newField,
+      ...fieldData,
       options: newField.type === 'Dropdown' || newField.type === 'Tags' ? newField.options : []
     };
     
@@ -112,10 +139,10 @@ export default function MyCRMsPage() {
       fields: [...prev.fields, field]
     }));
     
-    setNewField({ name: '', type: 'Text', required: false, options: [] });
+    setNewField({ id: 0, name: '', type: 'Text', required: false, options: [] });
   };
 
-  const removeField = (fieldId) => {
+  const removeField = (fieldId: number) => {
     setNewCRM(prev => ({
       ...prev,
       fields: prev.fields.filter(f => f.id !== fieldId)

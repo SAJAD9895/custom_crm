@@ -1,6 +1,6 @@
 
 'use client';
-import { useState } from 'react';
+import { SetStateAction, useState } from 'react';
 import Sidebar from '../../components/Sidebar';
 import TopBar from '../../components/TopBar';
 
@@ -12,7 +12,7 @@ export default function CRMBuilderPage() {
     { id: 3, name: 'Email', type: 'Email', required: true, key: 'email', defaultValue: '' }
   ]);
   const [showDrawer, setShowDrawer] = useState(false);
-  const [editingField, setEditingField] = useState(null);
+  const [editingField, setEditingField] = useState<null | { id?: number; name: string; type: string; required: boolean; key: string; defaultValue: string }>(null);
   const [newField, setNewField] = useState({
     name: '',
     type: 'Text',
@@ -50,9 +50,16 @@ export default function CRMBuilderPage() {
     setShowDrawer(true);
   };
 
-  const openEditField = (field) => {
+  const openEditField = (field: { id?: number; name: string; type: string; required: boolean; key: string; defaultValue: string } | null) => {
+    if (!field) return;
     setEditingField(field);
-    setNewField({ ...field });
+    setNewField({
+      name: field.name ?? '',
+      type: field.type ?? 'Text',
+      required: field.required ?? false,
+      key: field.key ?? '',
+      defaultValue: field.defaultValue ?? ''
+    });
     setShowDrawer(true);
   };
 
@@ -62,7 +69,7 @@ export default function CRMBuilderPage() {
     const fieldKey = newField.key || newField.name.toLowerCase().replace(/\s+/g, '_');
     
     if (editingField) {
-      setFields(fields.map(f => f.id === editingField.id ? { ...newField, key: fieldKey } : f));
+      setFields(fields.map(f => f.id === editingField.id ? { ...newField, key: fieldKey, id: f.id } : f));
     } else {
       const newId = Math.max(...fields.map(f => f.id), 0) + 1;
       setFields([...fields, { ...newField, id: newId, key: fieldKey }]);
@@ -71,11 +78,11 @@ export default function CRMBuilderPage() {
     setShowDrawer(false);
   };
 
-  const removeField = (id) => {
+  const removeField = (id: number) => {
     setFields(fields.filter(f => f.id !== id));
   };
 
-  const moveField = (id, direction) => {
+  const moveField = (id: number, direction: string) => {
     const currentIndex = fields.findIndex(f => f.id === id);
     if (currentIndex === -1) return;
     
@@ -87,8 +94,10 @@ export default function CRMBuilderPage() {
     setFields(newFields);
   };
 
-  const getFieldTypeIcon = (type) => {
-    const icons = {
+  type FieldType = 'Text' | 'Number' | 'Date' | 'Email' | 'Phone' | 'Dropdown' | 'Checkbox';
+
+  const getFieldTypeIcon = (type: FieldType) => {
+    const icons: Record<FieldType, string> = {
       'Text': 'ri-text',
       'Number': 'ri-hashtag',
       'Date': 'ri-calendar-line',
@@ -180,7 +189,7 @@ export default function CRMBuilderPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                          <i className={`${getFieldTypeIcon(field.type)} text-blue-600 w-4 h-4 flex items-center justify-center`}></i>
+                          <i className={`${getFieldTypeIcon(field.type as FieldType)} text-blue-600 w-4 h-4 flex items-center justify-center`}></i>
                         </div>
                         <div>
                           <h3 className="font-medium text-gray-900">{field.name}</h3>
@@ -282,14 +291,14 @@ export default function CRMBuilderPage() {
                         </div>
                       ) : field.type === 'Dropdown' ? (
                         <select className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm pr-8">
-                          <option>{mockFormData[field.name] || field.defaultValue || 'Select an option'}</option>
+                          <option>{mockFormData[field.name as keyof typeof mockFormData] || field.defaultValue || 'Select an option'}</option>
                         </select>
                       ) : (
                         <input
                           type={field.type === 'Email' ? 'email' : field.type === 'Phone' ? 'tel' : field.type === 'Date' ? 'date' : field.type === 'Number' ? 'number' : 'text'}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                          placeholder={mockFormData[field.name] || field.defaultValue || `Enter ${field.name.toLowerCase()}`}
-                          defaultValue={mockFormData[field.name] || field.defaultValue || ''}
+                          placeholder={mockFormData[field.name as keyof typeof mockFormData] || field.defaultValue || `Enter ${field.name.toLowerCase()}`}
+                          defaultValue={mockFormData[field.name as keyof typeof mockFormData] || field.defaultValue || ''}
                         />
                       )}
                     </div>
