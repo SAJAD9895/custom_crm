@@ -1,13 +1,24 @@
 'use client';
-import { useState } from 'react';
+import { SetStateAction, useState } from 'react';
 import Sidebar from '../../components/Sidebar';
 import TopBar from '../../components/TopBar';
+
+type WorkflowStep = {
+  id: number;
+  type: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  color: string;
+  config: any;
+  note?: string;
+};
 
 export default function AutomationsPage() {
   const [selectedWorkflow, setSelectedWorkflow] = useState(1);
   const [showBlockConfig, setShowBlockConfig] = useState(false);
-  const [selectedBlock, setSelectedBlock] = useState(null);
-  const [draggedBlock, setDraggedBlock] = useState(null);
+  const [selectedBlock, setSelectedBlock] = useState<WorkflowStep | null>(null);
+  const [draggedBlock, setDraggedBlock] = useState<any>(null);
   const [workflowStatus, setWorkflowStatus] = useState('Draft');
   const [workflowName, setWorkflowName] = useState('New Lead Welcome Flow');
   const [showWorkflowSettings, setShowWorkflowSettings] = useState(false);
@@ -118,52 +129,61 @@ export default function AutomationsPage() {
     }
   ]);
 
-  const availableBlocks = [
-    { 
-      type: 'trigger', 
-      title: 'Lead Captured', 
-      icon: 'ri-user-add-line', 
-      color: 'emerald',
-      description: 'Start automation when lead is captured'
-    },
-    { 
-      type: 'message', 
-      title: 'Send Message', 
-      icon: 'ri-message-3-line', 
-      color: 'green',
-      description: 'Send WhatsApp, Email, or SMS'
-    },
-    { 
-      type: 'assign', 
-      title: 'Assign Sales Rep', 
-      icon: 'ri-user-star-line', 
-      color: 'purple',
-      description: 'Assign lead to team member'
-    },
-    { 
-      type: 'condition', 
-      title: 'Check Condition', 
-      icon: 'ri-git-branch-line', 
-      color: 'amber',
-      description: 'Create conditional logic paths'
-    },
-    { 
-      type: 'delay', 
-      title: 'Wait (Delay)', 
-      icon: 'ri-time-line', 
-      color: 'slate',
-      description: 'Add time delays between actions'
-    },
-    { 
-      type: 'end', 
-      title: 'End Flow', 
-      icon: 'ri-stop-circle-line', 
-      color: 'red',
-      description: 'End the automation workflow'
-    }
-  ];
+  const availableBlocks: {
+      type: string;
+      title: string;
+      icon: string;
+      color: 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red';
+      description: string;
+    }[] = [
+      { 
+        type: 'trigger', 
+        title: 'Lead Captured', 
+        icon: 'ri-user-add-line', 
+        color: 'emerald',
+        description: 'Start automation when lead is captured'
+      },
+      { 
+        type: 'message', 
+        title: 'Send Message', 
+        icon: 'ri-message-3-line', 
+        color: 'green',
+        description: 'Send WhatsApp, Email, or SMS'
+      },
+      { 
+        type: 'assign', 
+        title: 'Assign Sales Rep', 
+        icon: 'ri-user-star-line', 
+        color: 'purple',
+        description: 'Assign lead to team member'
+      },
+      { 
+        type: 'condition', 
+        title: 'Check Condition', 
+        icon: 'ri-git-branch-line', 
+        color: 'amber',
+        description: 'Create conditional logic paths'
+      },
+      { 
+        type: 'delay', 
+        title: 'Wait (Delay)', 
+        icon: 'ri-time-line', 
+        color: 'slate',
+        description: 'Add time delays between actions'
+      },
+      { 
+        type: 'end', 
+        title: 'End Flow', 
+        icon: 'ri-stop-circle-line', 
+        color: 'red',
+        description: 'End the automation workflow'
+      }
+    ];
 
-  const getBlockColors = (color: string, variant: 'bg' | 'text' | 'border' | 'hover' = 'bg') => {
+  const getBlockColors = (
+    color: 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red',
+    variant: 'bg' | 'text' | 'border' | 'hover' = 'bg'
+  ) => {
     const colorMap = {
       emerald: {
         bg: 'bg-emerald-50',
@@ -205,17 +225,17 @@ export default function AutomationsPage() {
     return colorMap[color]?.[variant] || colorMap.slate[variant];
   };
 
-  const handleDragStart = (e, block) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, block: typeof availableBlocks[number]) => {
     setDraggedBlock(block);
     e.dataTransfer.effectAllowed = 'copy';
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: { preventDefault: () => void; dataTransfer: { dropEffect: string; }; }) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if (draggedBlock) {
       const newStep = {
@@ -233,16 +253,16 @@ export default function AutomationsPage() {
     }
   };
 
-  const configureBlock = (step) => {
+  const configureBlock = (step: SetStateAction<WorkflowStep | null>) => {
     setSelectedBlock(step);
     setShowBlockConfig(true);
   };
 
-  const removeStep = (stepId) => {
+  const removeStep = (stepId: number) => {
     setWorkflowSteps(workflowSteps.filter(step => step.id !== stepId));
   };
 
-  const moveStep = (stepId, direction) => {
+  const moveStep = (stepId: number, direction: string) => {
     const currentIndex = workflowSteps.findIndex(step => step.id === stepId);
     if (
       (direction === 'up' && currentIndex > 0) ||
@@ -255,7 +275,7 @@ export default function AutomationsPage() {
     }
   };
 
-  const saveBlockConfig = (config) => {
+  const saveBlockConfig = (config: any) => {
     if (selectedBlock) {
       setWorkflowSteps(workflowSteps.map(step => 
         step.id === selectedBlock.id 
@@ -267,13 +287,13 @@ export default function AutomationsPage() {
     setSelectedBlock(null);
   };
 
-  const updateBlockNote = (stepId, note) => {
+  const updateBlockNote = (stepId: number, note: string) => {
     setWorkflowSteps(workflowSteps.map(step => 
       step.id === stepId ? { ...step, note } : step
     ));
   };
 
-  const getConfigSubtitle = (type, config) => {
+  const getConfigSubtitle = (type: string, config: { sources: any[]; channel: any; template: any; field: any; operator: any; value: any; method: any; assignee: any; duration: number; unit: any; }) => {
     switch (type) {
       case 'trigger':
         return `From: ${config.sources?.join(', ') || 'Configure sources'}`;
@@ -301,7 +321,7 @@ export default function AutomationsPage() {
     alert('Workflow saved and activated successfully!');
   };
 
-  const saveWorkflowSettings = (name) => {
+  const saveWorkflowSettings = (name: SetStateAction<string>) => {
     setWorkflowName(name);
     setShowWorkflowSettings(false);
   };
@@ -452,17 +472,17 @@ export default function AutomationsPage() {
                           {/* Workflow Block */}
                           <div 
                             onClick={() => configureBlock(step)}
-                            className={`w-full max-w-md p-5 rounded-xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md group ${getBlockColors(step.color, 'bg')} ${getBlockColors(step.color, 'border')} ${getBlockColors(step.color, 'hover')}`}
+                            className={`w-full max-w-md p-5 rounded-xl border-2 cursor-pointer transition-all shadow-sm hover:shadow-md group ${getBlockColors(step.color as 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red', 'bg')} ${getBlockColors(step.color as 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red', 'border')} ${getBlockColors(step.color as 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red', 'hover')}`}
                           >
                             <div className="flex items-center gap-4">
                               {/* Block Icon */}
-                              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getBlockColors(step.color, 'bg')} ${getBlockColors(step.color, 'text')} shadow-sm`}>
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getBlockColors(step.color as 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red', 'bg')} ${getBlockColors(step.color as 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red', 'text')} shadow-sm`}>
                                 <i className={`${step.icon} w-6 h-6 flex items-center justify-center`}></i>
                               </div>
                               
                               {/* Block Content */}
                               <div className="flex-1 min-w-0">
-                                <h4 className={`font-semibold text-lg ${getBlockColors(step.color, 'text')}`}>{step.title}</h4>
+                                <h4 className={`font-semibold text-lg ${getBlockColors(step.color as 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red', 'text')}`}>{step.title}</h4>
                                 <p className="text-sm text-gray-600 mt-1">{step.subtitle}</p>
                                 {step.note && (
                                   <p className="text-xs text-gray-500 mt-1 italic">{step.note}</p>
@@ -573,7 +593,7 @@ export default function AutomationsPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getBlockColors(selectedBlock.color, 'bg')} ${getBlockColors(selectedBlock.color, 'text')}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getBlockColors(selectedBlock.color as 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red', 'bg')} ${getBlockColors(selectedBlock.color as 'emerald' | 'green' | 'amber' | 'purple' | 'slate' | 'red', 'text')}`}>
                   <i className={`${selectedBlock.icon} w-5 h-5 flex items-center justify-center`}></i>
                 </div>
                 <div>
@@ -757,7 +777,7 @@ export default function AutomationsPage() {
                 Cancel
               </button>
               <button 
-                onClick={() => saveBlockConfig()}
+                onClick={() => saveBlockConfig(selectedBlock.config)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap"
               >
                 Save Configuration
